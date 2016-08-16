@@ -56,6 +56,20 @@ export class TranslateStaticLoader implements TranslateLoader {
     }
 }
 
+export class TranslateDynamicLoader implements TranslateLoader {
+    constructor(private http: Http, private path: string) { }
+
+    /**
+     * Gets the translations from the given path
+     * @param lang
+     * @returns {any}
+     */
+    public getTranslation(lang: string): Observable<any> {
+        return this.http.get(`${this.path}/${lang}`)
+            .map((res: Response) => res.json());
+    }
+}
+
 @Injectable()
 export class TranslateService {
     /**

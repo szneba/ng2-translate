@@ -1,5 +1,5 @@
 import {Injector, ReflectiveInjector} from "@angular/core";
-import {ResponseOptions, Response, XHRBackend, HTTP_PROVIDERS} from "@angular/http";
+import {ResponseOptions, Response, XHRBackend, HTTP_PROVIDERS, Http} from "@angular/http";
 import {MockBackend, MockConnection} from "@angular/http/testing";
 import {
     TRANSLATE_PROVIDERS,
@@ -7,6 +7,7 @@ import {
     MissingTranslationHandler,
     TranslateLoader,
     TranslateStaticLoader,
+    TranslateDynamicLoader,
     LangChangeEvent,
     TranslationChangeEvent
 } from './../ng2-translate';
@@ -474,6 +475,32 @@ export function main() {
             });
 
             // mock response after the xhr request, otherwise it will be undefined
+            mockBackendResponse(connection, '{"TEST": "This is a test"}');
+        });
+
+        it('should be able to provide TranslateDynamicLoader', () => {
+            injector = ReflectiveInjector.resolveAndCreate([
+                HTTP_PROVIDERS,
+                {provide: XHRBackend, useClass: MockBackend},
+                [
+                    {
+                        provide: TranslateLoader,
+                        useFactory: (http: Http) => new TranslateDynamicLoader(http, 'http://testpath.test'),
+                        deps: [Http]
+                    },
+                    TranslateService
+                ]
+            ]);
+            prepare(injector);
+
+            expect(translate).toBeDefined();
+            expect(translate.currentLoader).toBeDefined();
+            expect(translate.currentLoader instanceof TranslateDynamicLoader).toBeTruthy();
+
+            translate.use('en');
+            translate.get('TEST').subscribe((res: string) => {
+                expect(res).toEqual('This is a test');
+            });
             mockBackendResponse(connection, '{"TEST": "This is a test"}');
         });
 
